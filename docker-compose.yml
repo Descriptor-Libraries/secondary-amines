@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+
+  secondary-amines_backend:
+    image: 'descriptor-backend:latest'
+    environment:
+      POSTGRES_SERVER: descriptor_database
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWD: "${POSTGRES_PASSWD:?is not set, expected from ../.env.secrets via the .env link in this folder}"
+      POSTGRES_DB: secondary_amines_data
+      API_PREFIX: secondary-amines
+    entrypoint: bash prestart.sh
+    networks:
+      - external_network
+      - descriptor-libraries-internal
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.descriptor_libraries-secondary-amines_backend.loadbalancer.server.port=8080
+      - "traefik.http.routers.descriptor_libraries-secondary-amines_backend.rule=(Host(`descriptor-libraries.molssi.org`) && PathPrefix(`/api/secondary-amines`))"
+      - traefik.http.routers.descriptor_libraries-secondary-amines_backend.entrypoints=websecure
+      - traefik.http.routers.descriptor_libraries-secondary-amines_backend.tls.certresolver=letsencrypt
+
+  secondary-amines_frontend:
+    image: 'descriptor-frontend-alpine:latest'
+    volumes:
+      - "./public:/app/public"
+    environment:
+      - VITE_BASE_URL=/secondary-amines
+    networks:
+      - external_network
+    entrypoint: ash renameBase.sh
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.descriptor_libraries-frontend-secondary-amines.rule=(Host(`descriptor-libraries.molssi.org`) && PathPrefix(`/secondary-amines`))"
+      - "traefik.http.services.descriptor_libraries-frontend-secondary-amines.loadbalancer.server.port=3000"
+      - traefik.http.routers.descriptor_libraries-frontend-secondary-amines.entrypoints=websecure
+      - traefik.http.routers.descriptor_libraries-frontend-secondary-amines.tls.certresolver=letsencrypt
+
+networks:
+  external_network:
+    # external = handled outside of this docker compose
+    name: docker_main_net
+    external: true
+  descriptor-libraries-internal:
+    external: true
