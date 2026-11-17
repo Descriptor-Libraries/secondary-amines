@@ -3,7 +3,7 @@ version: '3'
 services:
 
   secondary-amines_backend:
-    image: 'descriptor-backend:latest'
+    image: "${BACKEND_IMAGE:?is not set; deploy with ../scripts/deploy-library.sh}"
     environment:
       POSTGRES_SERVER: descriptor_database
       POSTGRES_USER: postgres
@@ -22,7 +22,7 @@ services:
       - traefik.http.routers.descriptor_libraries-secondary-amines_backend.tls.certresolver=letsencrypt
 
   secondary-amines_frontend:
-    image: 'descriptor-frontend-alpine:latest'
+    image: "${FRONTEND_IMAGE:?is not set; deploy with ../scripts/deploy-library.sh}"
     volumes:
       - "./public:/app/public"
     environment:
